@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { OrgProvider } from "@/lib/org/OrgContext";
+import { createServiceRoleClient } from "@/lib/supabase/server";
+import type { Org } from "@/lib/org/types";
 import "./globals.css";
+
+export const dynamic = "force-dynamic";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,17 +22,29 @@ export const metadata: Metadata = {
   description: "AI HQ",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = createServiceRoleClient();
+  const { data, error } = await supabase
+    .from("orgs")
+    .select("id, name")
+    .order("name");
+
+  if (error) {
+    throw error;
+  }
+
+  const orgs = data as Org[];
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <OrgProvider>{children}</OrgProvider>
+        <OrgProvider orgs={orgs}>{children}</OrgProvider>
       </body>
     </html>
   );
