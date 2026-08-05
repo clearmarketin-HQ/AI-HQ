@@ -1,15 +1,21 @@
-import { OrgSwitcher } from "@/components/OrgSwitcher";
+"use client";
+
+import { Shell } from "@/components/Shell";
+import { TopRail } from "@/components/TopRail";
+import { useOrg } from "@/lib/org/OrgContext";
 
 export default function Home() {
+  const { org } = useOrg();
+
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="flex items-center justify-between border-b border-ink-2 px-6 py-4">
-        <span className="text-sm font-medium text-ink-4">AI HQ</span>
-        <OrgSwitcher />
-      </header>
-      <main className="flex flex-1 items-center justify-center text-ink-3">
-        <p className="text-sm">Nothing here yet.</p>
+    <Shell>
+      <TopRail />
+      <main className="flex flex-1 flex-col gap-6 px-6 py-8">
+        <h1 className="text-xl font-semibold text-ink-4">{org.name}</h1>
+        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-ink-2 text-ink-3">
+          <p className="text-sm">Coming soon</p>
+        </div>
       </main>
-    </div>
+    </Shell>
   );
 }

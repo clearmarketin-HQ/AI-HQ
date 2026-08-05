@@ -7,7 +7,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { STUB_ORGS } from "./stub-orgs";
 import type { Org } from "./types";
 
 interface OrgContextValue {
@@ -18,9 +17,14 @@ interface OrgContextValue {
 
 const OrgContext = createContext<OrgContextValue | null>(null);
 
-export function OrgProvider({ children }: { children: ReactNode }) {
-  const orgs = STUB_ORGS;
-  const [orgId, setOrgId] = useState(orgs[0].id);
+export function OrgProvider({
+  orgs,
+  children,
+}: {
+  orgs: Org[];
+  children: ReactNode;
+}) {
+  const [orgId, setOrgId] = useState(orgs[0]?.id ?? "");
 
   const value = useMemo<OrgContextValue>(() => {
     const org = orgs.find((o) => o.id === orgId) ?? orgs[0];
