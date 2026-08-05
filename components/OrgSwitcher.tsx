@@ -5,6 +5,10 @@ import { useOrg } from "@/lib/org/OrgContext";
 export function OrgSwitcher() {
   const { org, orgs, setOrgId } = useOrg();
 
+  if (!org) {
+    return <span className="text-sm text-ink-3">No organizations</span>;
+  }
+
   return (
     <select
       value={org.id}

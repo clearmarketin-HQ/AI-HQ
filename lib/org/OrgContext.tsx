@@ -10,7 +10,7 @@ import {
 import type { Org } from "./types";
 
 interface OrgContextValue {
-  org: Org;
+  org: Org | undefined;
   orgs: Org[];
   setOrgId: (id: string) => void;
 }

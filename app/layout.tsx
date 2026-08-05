@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { OrgProvider } from "@/lib/org/OrgContext";
-import { createServiceRoleClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import type { Org } from "@/lib/org/types";
 import "./globals.css";
 
@@ -27,17 +27,25 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = createServiceRoleClient();
-  const { data, error } = await supabase
-    .from("orgs")
-    .select("id, name")
-    .order("name");
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (error) {
-    throw error;
+  let orgs: Org[] = [];
+  if (user) {
+    // RLS on `orgs` scopes rows to the current user's org_members rows.
+    const { data, error } = await supabase
+      .from("orgs")
+      .select("id, name")
+      .order("name");
+
+    if (error) {
+      throw error;
+    }
+
+    orgs = data as Org[];
   }
-
-  const orgs = data as Org[];
 
   return (
     <html lang="en">
