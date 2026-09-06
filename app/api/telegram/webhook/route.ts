@@ -95,10 +95,7 @@ export async function POST(request: NextRequest) {
   }
 
   const orgs = orgsData as OrgRow[];
-  const classification = await classifyCapture(
-    rawText,
-    orgs.map((org) => org.slug)
-  );
+  const classification = await classifyCapture(rawText, orgs);
 
   // Never trust the AI-returned slug directly — resolve against the orgs
   // we just fetched from the DB.
