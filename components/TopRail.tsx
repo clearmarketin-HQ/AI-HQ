@@ -12,7 +12,7 @@ export async function TopRail() {
   } = await supabase.auth.getUser();
 
   return (
-    <header className="relative flex flex-wrap items-center justify-between gap-6 border-b border-ink-2/50 px-6 py-3.5">
+    <header className="flex items-center gap-6 border-b border-ink-2/50 px-6 py-3.5">
       <div className="flex flex-shrink-0 items-center gap-4">
         <span className="text-[15px] font-semibold tracking-tight text-ink-4">
           AI HQ
@@ -20,7 +20,7 @@ export async function TopRail() {
         <OrgSwitcher />
       </div>
 
-      <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-[22px] md:flex">
+      <nav className="hidden flex-1 items-center justify-center gap-[22px] md:flex">
         {TABS.map((tab) => (
           <span
             key={tab}
@@ -37,8 +37,10 @@ export async function TopRail() {
 
       <div className="flex flex-shrink-0 items-center gap-3.5">
         <TopRailClock />
-        <span className="text-sm text-ink-3">{user?.email}</span>
-        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-accent/40 bg-accent/[0.18] text-xs font-semibold text-accent">
+        <div
+          title={user?.email ?? undefined}
+          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-accent/40 bg-accent/[0.18] text-xs font-semibold text-accent"
+        >
           {getInitials(user?.email)}
         </div>
         <SignOutButton />

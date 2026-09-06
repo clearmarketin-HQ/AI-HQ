@@ -28,7 +28,7 @@ export function OrgProvider({
   children: ReactNode;
 }) {
   const allOrgs = useMemo(() => [ALL_ORGS_OPTION, ...orgs], [orgs]);
-  const [orgId, setOrgId] = useState(orgs[0]?.id ?? ALL_ORGS_ID);
+  const [orgId, setOrgId] = useState(ALL_ORGS_ID);
 
   const value = useMemo<OrgContextValue>(() => {
     const org = allOrgs.find((o) => o.id === orgId) ?? allOrgs[0];
