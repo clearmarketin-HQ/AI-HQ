@@ -65,8 +65,17 @@ export async function POST(request: NextRequest) {
 
   let rawText: string;
   if (message.voice) {
-    const audioBlob = await downloadVoiceFile(message.voice.file_id);
-    rawText = await transcribeVoice(audioBlob, "voice.ogg");
+    try {
+      const audioBlob = await downloadVoiceFile(message.voice.file_id);
+      rawText = await transcribeVoice(audioBlob, "voice.ogg");
+    } catch (error) {
+      console.error("Voice transcription failed:", error);
+      await sendMessage(
+        message.chat.id,
+        "⚠️ Couldn't transcribe that voice note right now — try again shortly, or send it as text."
+      );
+      return NextResponse.json({ ok: true });
+    }
   } else if (message.text) {
     rawText = message.text;
   } else {
