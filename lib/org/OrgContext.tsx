@@ -9,6 +9,9 @@ import {
 } from "react";
 import type { Org } from "./types";
 
+export const ALL_ORGS_ID = "__all__";
+const ALL_ORGS_OPTION: Org = { id: ALL_ORGS_ID, name: "All Businesses" };
+
 interface OrgContextValue {
   org: Org | undefined;
   orgs: Org[];
@@ -24,12 +27,13 @@ export function OrgProvider({
   orgs: Org[];
   children: ReactNode;
 }) {
-  const [orgId, setOrgId] = useState(orgs[0]?.id ?? "");
+  const allOrgs = useMemo(() => [ALL_ORGS_OPTION, ...orgs], [orgs]);
+  const [orgId, setOrgId] = useState(orgs[0]?.id ?? ALL_ORGS_ID);
 
   const value = useMemo<OrgContextValue>(() => {
-    const org = orgs.find((o) => o.id === orgId) ?? orgs[0];
-    return { org, orgs, setOrgId };
-  }, [orgId, orgs]);
+    const org = allOrgs.find((o) => o.id === orgId) ?? allOrgs[0];
+    return { org, orgs: allOrgs, setOrgId };
+  }, [orgId, allOrgs]);
 
   return <OrgContext.Provider value={value}>{children}</OrgContext.Provider>;
 }
