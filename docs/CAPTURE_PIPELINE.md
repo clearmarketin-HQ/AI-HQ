@@ -119,6 +119,14 @@ Credentials are read per call, never at module scope. A module-level throw
 in `transcribe.ts` previously took down the whole webhook on import —
 including text captures, which never reach Whisper.
 
+## Known gap: transcription failure still loses the capture
+
+Classification degrades through three tiers; **transcription does not**. If
+Whisper fails, the webhook warns the operator and returns without writing
+anything. The warning distinguishes an account-level failure (out of
+credit, bad key — retrying won't help) from a transient one, but either way
+the capture isn't stored. See `ROADMAP.md` 4b; the fix is gated on Phase 1.
+
 ## One step from the guide we don't do yet
 
 - **Embedding.** After writing the capture, the guide embeds the text and

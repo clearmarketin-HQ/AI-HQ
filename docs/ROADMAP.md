@@ -60,6 +60,26 @@ Not yet verified against the live OpenAI API — tier 2's request shape is
 typechecked and exercised, but this environment blocks `api.openai.com`, so
 a real tier-2 success is unproven until it runs in a deployment.
 
+## 4b. Failed voice notes are dropped, not stored — ⚠️ live
+
+**Observed 2026-09-14 in production**, while the OpenAI account was out of
+credit. When transcription fails, the webhook warns the operator and
+returns **without writing anything** — no `raw_captures` row, no reference
+to the audio. The thought is gone unless the operator retypes it.
+
+The reply now distinguishes an account problem from a transient blip, so it
+no longer tells someone to retry into a failure that retrying can't clear
+(`TranscriptionError.needsAttention`). But the capture is still lost.
+
+The fix is to persist the capture *before* transcription — a `raw_captures`
+row holding Telegram's `file_id`, marked as awaiting transcription, so it
+can be re-run once credit is restored. That needs a write whose column
+nullability isn't verifiable yet, so **it's gated on Phase 1** rather than
+guessed at. Do it as the first thing after the schema lands.
+
+Telegram retains the audio, so nothing is unrecoverable *today* — but only
+for as long as the sender can still find the message.
+
 ## 5. Memory / brain layer (guide Part 6)
 
 Not started. No `memory_chunks` table, no pgvector, no embedding step in the

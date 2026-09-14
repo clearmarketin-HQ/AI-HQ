@@ -6,7 +6,10 @@ import {
   downloadVoiceFile,
   sendMessage,
 } from "@/lib/telegram/api";
-import { transcribeVoice } from "@/lib/telegram/transcribe";
+import {
+  TranscriptionError,
+  transcribeVoice,
+} from "@/lib/telegram/transcribe";
 import {
   classifyCapture,
   REGEX_CLASSIFIER_SOURCE,
@@ -71,9 +74,17 @@ export async function POST(request: NextRequest) {
       rawText = await transcribeVoice(audioBlob, "voice.ogg");
     } catch (error) {
       console.error("Voice transcription failed:", error);
+
+      // Don't tell someone to retry into a failure that retrying can't
+      // clear — send them to the path that still works instead.
+      const needsAttention =
+        error instanceof TranscriptionError && error.needsAttention;
+
       await sendMessage(
         message.chat.id,
-        "⚠️ Couldn't transcribe that voice note right now — try again shortly, or send it as text."
+        needsAttention
+          ? "⚠️ Voice transcription is unavailable — the transcription account needs attention, so retrying won't help. Send this as text and it'll be captured normally."
+          : "⚠️ Couldn't transcribe that voice note right now — try again shortly, or send it as text."
       );
       return NextResponse.json({ ok: true });
     }

@@ -137,6 +137,13 @@ where table_schema = 'public' and table_name = 'operators';
       "inferred" caveats once it's true.
 - [ ] Adopt the Supabase CLI for future changes so schema edits arrive as
       reviewable migrations, not dashboard clicks.
+- [ ] **Then immediately: persist failed voice notes.** A voice note whose
+      transcription fails is currently dropped with no DB row at all (see
+      `ROADMAP.md` 4b — observed in production 2026-09-14). Write the
+      `raw_captures` row *before* transcribing, holding Telegram's
+      `file_id`, so a failure leaves something to re-run instead of
+      nothing. Blocked on this phase only because it needs verified column
+      nullability.
 
 **Done when:** a new contributor can read the migration instead of
 reverse-engineering queries, and `ARCHITECTURE.md` is verified rather than
