@@ -38,6 +38,14 @@ configured**, for two independent reasons:
    returns `403 to CONNECT` for `supabase.com:443` and
    `api.telegram.org:443`. GitHub and npm are allowlisted; these are not.
 
+Also verified 2026-09-14, and relevant to what a session can test of the
+capture path: **`api.anthropic.com` is reachable** (a bogus key gets a real
+401 back), but **`api.openai.com` is not** — it returns
+`403 Host not in allowlist`. So tier 1 of the classifier fallback chain can
+be exercised from a session and tier 2 cannot. Adding `api.openai.com` to
+the network policy would let a session verify tier 2 and the Whisper
+transcription path.
+
 To change that, edit the **environment settings** for Claude Code on the web
 ([docs](https://code.claude.com/docs/en/claude-code-on-the-web)) — network
 policy and environment variables both live there.

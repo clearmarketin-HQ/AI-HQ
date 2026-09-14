@@ -22,10 +22,16 @@ PDF** — several divergences are deliberate.
 
 - **Auth.** Supabase email/password, cookie sessions, middleware redirect
   gate. `/api/` routes are excluded from the gate and check auth themselves.
-- **Telegram capture.** Voice (Whisper transcription) and text → Claude
+- **Telegram capture.** Voice (Whisper transcription) and text →
   classification → `raw_captures` → `tasks` (when applicable) →
   `audit_log`, with a confirmation reply and an inline urgency-override
   keyboard. Transcription failures degrade gracefully instead of vanishing.
+- **Classifier fallback chain.** Claude (`claude-haiku-4-5`) → OpenAI
+  (`OPENAI_CLASSIFIER_MODEL`) → regex, with the tier that produced the
+  result recorded on `raw_captures.llm_source`. The regex tier never
+  throws, so a provider outage degrades a capture instead of dropping it,
+  and both surfaces tell the operator when that happened. See
+  [`CAPTURE_PIPELINE.md`](./CAPTURE_PIPELINE.md).
 - **Web capture.** The floating `CaptureBox` POSTs to `/api/capture`, which
   runs the same pipeline against the logged-in operator. Toast on success.
 - **Dashboard shell.** Top rail (brand, org switcher, tabs, live clock,
@@ -106,14 +112,28 @@ item 9.
 Follow **[`BUILD_PLAN.md`](./BUILD_PLAN.md)** — the phased plan to finish
 the buildout. In short:
 
+**Phase 4 (classifier fallback chain) is done** — it was the one phase
+that needed neither deployed infrastructure nor a human decision. What
+remains:
+
 1. **Phase 0 — get the Vercel env vars set** and prove one capture
    end-to-end in production. Not a coding task, and nothing can be verified
-   for real until it's done.
+   for real until it's done. This is also where **tier 2 of the fallback
+   chain gets its first real test** — the OpenAI request shape has never
+   received a live response, because agent sessions can't reach
+   `api.openai.com` either.
 2. **Phase 1 — check the real schema into `supabase/migrations/`**,
    settling the `operators.email` question. Everything after this is built
    on guesses until it exists.
 3. **Phase 2 — wire the first card to real data**, establishing the pattern
    and the org-filtering contract the other seven copy.
+
+The four decisions the plan was waiting on (Pipeline's data source,
+MarketingPulse's data source, selected-org transport, and the Brain tab)
+were settled on 2026-09-14 and are recorded at the bottom of
+[`BUILD_PLAN.md`](./BUILD_PLAN.md). One of them added a blocker:
+MarketingPulse is to use a real ads API, which needs ad account access and
+credentials before it can be built.
 
 `ROADMAP.md` has the same gaps as a flat priority list if you want the
 inventory rather than the sequence.
