@@ -71,7 +71,16 @@ never been exercised end-to-end against a real deployment by this session.
 confirmed — there's no migration to check against. If web capture 500s in
 production, check this first.
 
-### 3. Waiting on input: GoHighLevel CRM structure
+### 3. Agent sessions can't reach Supabase or Telegram
+
+Verified 2026-09-14. No credentials are supplied to the environment, *and*
+the network policy returns `403 to CONNECT` for `supabase.com:443` and
+`api.telegram.org:443` — so pasting keys into a session wouldn't help on its
+own. This is why Phases 0 and 1 of [`BUILD_PLAN.md`](./BUILD_PLAN.md) are
+human tasks; see the reachability note there for how to change it, and for
+the schema-dump path that needs no connectivity at all.
+
+### 4. Waiting on input: GoHighLevel CRM structure
 
 Client/project-scoped classification is designed but unbuildable until the
 GoHighLevel account/client/project structure is provided. See `ROADMAP.md`
