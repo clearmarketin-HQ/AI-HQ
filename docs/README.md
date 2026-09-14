@@ -12,13 +12,15 @@ back on the dashboard.
 ## Start here
 
 1. **[`HANDOFF.md`](./HANDOFF.md)** — current state, what's in flight, what's
-   blocked, what to do next. Read this first if you're picking up the work.
-2. **[`BUILD_GUIDE.md`](./BUILD_GUIDE.md)** — the guide this project follows
+   blocked. Read this first if you're picking up the work.
+2. **[`BUILD_PLAN.md`](./BUILD_PLAN.md)** — the sequenced plan to finish the
+   buildout, phase by phase, with what gates what.
+3. **[`BUILD_GUIDE.md`](./BUILD_GUIDE.md)** — the guide this project follows
    (the *Personal OS Build Cheat Sheet*, committed at
    [`source/`](./source/)), which of its nine parts are done, and — critically
    — **where AI HQ deliberately diverges from it**. Read before following any
    prompt out of the PDF.
-3. **[`ARCHITECTURE.md`](./ARCHITECTURE.md)** — tech stack, directory map, and
+4. **[`ARCHITECTURE.md`](./ARCHITECTURE.md)** — tech stack, directory map, and
    the (inferred, unmigrated) database schema.
 
 ## Reference
