@@ -28,6 +28,12 @@ ANTHROPIC_API_KEY=
 Local dev: copy `.env.local.example` to `.env.local` and fill in real
 values.
 
+These seven are what the code uses *today*. The build guide's full checklist
+(Appendix B) runs to ~19 — the extras cover parts we haven't built yet
+(Google Calendar/Sheets credentials, `CRON_SECRET`, a fallback classifier
+model). See [`BUILD_GUIDE.md`](./BUILD_GUIDE.md) for which of those we'll
+need and which don't apply to us.
+
 ## Vercel
 
 The project deploys via Vercel's GitHub integration (no GitHub Actions

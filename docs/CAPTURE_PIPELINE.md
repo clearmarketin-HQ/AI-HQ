@@ -87,3 +87,15 @@ Shared by both entry points, unchanged between them.
 
 If you add a third capture surface, follow this exact order and reuse
 `classifyCapture` rather than re-implementing classification.
+
+## Two steps from the guide we don't do yet
+
+The build guide's pipeline (Part 4) has two stages ours is missing:
+
+- **Embedding.** After writing the capture, the guide embeds the text and
+  writes a `memory_chunks` row. We have no memory layer at all — see
+  `ROADMAP.md` item 5.
+- **Fallback classification.** The guide specifies Claude primary → OpenAI
+  fallback → regex last resort. `classifyCapture` calls Claude and throws if
+  it fails, so an Anthropic outage drops the capture. See `ROADMAP.md`
+  item 4.
