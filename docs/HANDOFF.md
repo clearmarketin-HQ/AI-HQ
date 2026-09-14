@@ -92,18 +92,22 @@ item 9.
 - **Hard rule:** Anthropic calls go through `@anthropic-ai/sdk`, never raw
   `fetch`.
 
-## Suggested next steps, in order
+## Next steps
 
-1. **Get the Vercel env vars set** and confirm a deploy goes green. Until
-   this happens, nothing can be verified for real.
-2. **Check the real schema into `supabase/migrations/`** and reconcile
-   `ARCHITECTURE.md` against it — including settling the
-   `operators.email` question. Everything else is built on guesses until
-   this is done.
-3. **Wire the first card to real data** (Operators or Session is easiest),
-   establishing the API-route pattern the other seven will copy, and decide
-   how org filtering works while you're there.
-4. Then follow `ROADMAP.md` in order.
+Follow **[`BUILD_PLAN.md`](./BUILD_PLAN.md)** — the phased plan to finish
+the buildout. In short:
+
+1. **Phase 0 — get the Vercel env vars set** and prove one capture
+   end-to-end in production. Not a coding task, and nothing can be verified
+   for real until it's done.
+2. **Phase 1 — check the real schema into `supabase/migrations/`**,
+   settling the `operators.email` question. Everything after this is built
+   on guesses until it exists.
+3. **Phase 2 — wire the first card to real data**, establishing the pattern
+   and the org-filtering contract the other seven copy.
+
+`ROADMAP.md` has the same gaps as a flat priority list if you want the
+inventory rather than the sequence.
 
 ## Open question from the last session
 
