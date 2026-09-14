@@ -66,20 +66,30 @@ All of this is dashboard and phone work by definition — an agent session
 can't do any of it (see the reachability note above). Hand the results back
 to the next session.
 
-- [ ] Set the 7 env vars in Vercel → Project Settings → Environment
-      Variables, for **Preview and Production** (list in
-      [`DEPLOYMENT.md`](./DEPLOYMENT.md)). Needs someone with dashboard
-      access to the `ai-hq` project under team `cmhq`.
-- [ ] Redeploy; confirm the `Vercel` check goes green on `main`.
+**Status as of 2026-09-14: mostly done.** The deploy is green on `main` and
+Telegram text capture is confirmed working end-to-end in the deployed bot,
+so the Production env vars are set and the webhook points at the live URL.
+Three things remain, marked below.
+
+- [x] Set the 7 env vars in Vercel for **Production**.
+- [ ] **Still open: set the same 7 for Preview.** Preview builds fail
+      without them — a PR changing only markdown failed the same way — so
+      no PR can show a green `Vercel` check until this is done.
+- [x] Redeploy; confirm the `Vercel` check goes green on `main`.
 - [ ] Confirm the Telegram webhook points at the live URL:
       ```
       curl -F "url=https://<live-domain>/api/telegram/webhook" \
            -F "secret_token=$TELEGRAM_WEBHOOK_SECRET" \
            "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook"
       ```
-- [ ] Send a real voice note and a real text from Telegram. Confirm a
-      `raw_captures` row, a `tasks` row, and an `audit_log` row land, with
-      the correct `org_id` resolved.
+- [x] Send a real text from Telegram — confirmed, the bot classifies and
+      replies in the deployed chat.
+- [ ] **Still open:** confirm the `raw_captures`, `tasks` and `audit_log`
+      rows actually land, with the correct `org_id` resolved. The reply
+      proves classification, not persistence.
+- [ ] **Blocked:** a real voice note. The OpenAI account is out of credit,
+      so Whisper fails — and a failed transcription is currently dropped
+      with no DB row at all (`ROADMAP.md` 4b). Add credit first.
 - [ ] Log in to the deployed dashboard, submit via the web capture box,
       confirm the same. **This is the first real test of the
       `operators.email` lookup** — if web capture 500s, that's Phase 1's

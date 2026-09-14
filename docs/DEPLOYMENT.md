@@ -45,13 +45,14 @@ The project deploys via Vercel's GitHub integration (no GitHub Actions
 workflow exists in this repo — deploy status shows up purely as a `Vercel`
 commit status / PR comment from `vercel[bot]`).
 
-### ⚠️ Standing issue: missing env vars
+### ⚠️ Standing issue: env vars set for Production, not Preview
 
-As of this writing, the Vercel project (`ai-hq`, under the `cmhq` team) does
-**not** have the seven env vars above set for the Preview and/or Production
-environments. Every deployment since the Telegram webhook was added has
-failed for this exact reason — it is a **Vercel dashboard configuration
-gap, not a code bug**. If you see a deploy fail:
+**Updated 2026-09-14.** Production now works — `main` deploys green and
+Telegram capture runs in the deployed bot. **Preview deployments still
+fail**, including a PR that changed only markdown, so no PR can show a
+green `Vercel` check until the seven env vars above are also set with
+**Preview** ticked. It remains a **Vercel dashboard configuration gap, not
+a code bug**. If you see a deploy fail:
 
 1. Check whether the failure reproduces with a clean local build:
    ```

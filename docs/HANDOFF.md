@@ -54,21 +54,31 @@ Full list with priorities: [`ROADMAP.md`](./ROADMAP.md).
 
 ## Live blockers
 
-### 1. Vercel deploys are failing (needs dashboard access)
+### 1. Preview deploys fail; Production deploys succeed
 
-Every deployment since the Telegram webhook landed has failed because the
-Vercel project (`ai-hq`, team `cmhq`) doesn't have the seven required env
-vars set for Preview/Production. **This is a Vercel dashboard configuration
-gap, not a code bug** — `next build` passes locally with dummy values.
+**Updated 2026-09-14 — this blocker is half-resolved.** Production is
+green: `main` has deployed successfully for its last three commits
+(`042cf04`, `d731ff7`, `6020a32`), and Telegram text capture has been
+confirmed working end-to-end in the deployed bot. The seven env vars are
+evidently set for Production.
+
+**Preview deployments still fail.** PR #11 changed only two markdown files
+— zero code — and its Preview build failed; the same commits went green on
+`main` once merged. PR #12 fails the same way. The pattern is
+environment-scoped, not content-scoped, which points at the seven env vars
+being set for Production but **not Preview**. Several modules
+(`lib/supabase/admin.ts`, `client.ts`, `server.ts`, `middleware.ts`) read
+credentials at module scope and throw when they're absent, failing the
+build rather than starting.
 
 Fix: Vercel → Project Settings → Environment Variables → add all seven from
-[`DEPLOYMENT.md`](./DEPLOYMENT.md) → redeploy. Nobody working only in this
-repo can resolve it; don't try to fix it with code, an empty commit, or a
-PR close/reopen.
+[`DEPLOYMENT.md`](./DEPLOYMENT.md) with **Preview** ticked → redeploy.
+**This is still a dashboard configuration gap, not a code bug** — `next
+build` passes locally with dummy values. Don't try to fix it with code, an
+empty commit, or a PR close/reopen.
 
-Consequence: **nothing has been verified in a deployed environment.** All
-verification so far is local typecheck + build. The capture pipeline has
-never been exercised end-to-end against a real deployment by this session.
+Consequence: **no PR can show a green check until Preview is configured**,
+so every PR merges on an unverified preview. Production itself is fine.
 
 ### 2. `operators.email` is an unverified assumption
 
@@ -118,10 +128,17 @@ remains:
 
 1. **Phase 0 — get the Vercel env vars set** and prove one capture
    end-to-end in production. Not a coding task, and nothing can be verified
-   for real until it's done. This is also where **tier 2 of the fallback
-   chain gets its first real test** — the OpenAI request shape has never
-   received a live response, because agent sessions can't reach
-   `api.openai.com` either.
+   for real until it's done. **Mostly done as of 2026-09-14** — the deploy
+   is green on `main` and Telegram text capture works in production. What's
+   left: confirm the `raw_captures`/`tasks`/`audit_log` rows actually land
+   with the right `org_id`, test the web capture box (the first real test
+   of the `operators.email` lookup), and set the Preview env vars so PRs
+   can go green. This is also where **tier 2 of the fallback chain gets its
+   first real test** — the OpenAI request shape has never received a live
+   response, because agent sessions can't reach `api.openai.com` either.
+   ⚠️ Note the OpenAI account was out of credit as of 2026-09-14, which
+   also disables Whisper, so voice notes fail (and are currently dropped —
+   see `ROADMAP.md` 4b).
 2. **Phase 1 — check the real schema into `supabase/migrations/`**,
    settling the `operators.email` question. Everything after this is built
    on guesses until it exists.
