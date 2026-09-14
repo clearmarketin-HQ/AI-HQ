@@ -25,11 +25,38 @@ Two things gate all of that work, and neither is a feature:
 Do those first, in that order. Phases 2+ are wasted effort until they're
 done.
 
+## ⚠️ What an agent session can and can't reach
+
+Verified 2026-09-14 from a Claude Code web session. **Neither Phase 0 nor
+Phase 1 can be completed from inside an agent session as currently
+configured**, for two independent reasons:
+
+1. **No credentials.** `.env.local` is gitignored (correctly), so a fresh
+   clone has none, and the environment config doesn't supply them either.
+2. **The network policy blocks Supabase and Telegram.** Even with
+   credentials pasted in, the connection never opens — the agent proxy
+   returns `403 to CONNECT` for `supabase.com:443` and
+   `api.telegram.org:443`. GitHub and npm are allowlisted; these are not.
+
+To change that, edit the **environment settings** for Claude Code on the web
+([docs](https://code.claude.com/docs/en/claude-code-on-the-web)) — network
+policy and environment variables both live there.
+
+⚠️ Before adding `SUPABASE_SERVICE_ROLE_KEY` to an environment: it bypasses
+RLS entirely, so every session in that environment gains full read/write on
+every table. Reasonable for real development work, but make it a deliberate
+choice rather than a side effect of unblocking a one-time schema dump —
+Phase 1 below has a path that needs no session connectivity at all.
+
 ---
 
 ## Phase 0 — Unblock · *not a coding task*
 
 **Goal:** a green deploy and one capture proven end-to-end in production.
+
+All of this is dashboard and phone work by definition — an agent session
+can't do any of it (see the reachability note above). Hand the results back
+to the next session.
 
 - [ ] Set the 7 env vars in Vercel → Project Settings → Environment
       Variables, for **Preview and Production** (list in
@@ -60,10 +87,39 @@ deployed app, with no manual intervention.
 **Goal:** stop guessing. Everything after this depends on knowing the real
 table shapes.
 
-- [ ] Dump the live schema from Supabase (SQL editor, or
-      `supabase db dump`) and commit it as
-      `supabase/migrations/0001_init.sql` — tables, constraints, indexes,
-      and RLS policies as they actually exist.
+**This does not require a connected session** — it needs the schema *text*,
+which a human can produce in about a minute. Fastest route, run on a laptop
+(not in a session):
+
+```bash
+npx supabase login
+npx supabase link --project-ref <your-project-ref>
+npx supabase db dump --schema public > supabase/migrations/0001_init.sql
+```
+
+Commit that file and the next session has ground truth. Zero-install
+fallback — run in the Supabase SQL editor and paste the output into the
+chat, and the agent reconstructs the DDL (less faithful, but unblocks):
+
+```sql
+select table_name, column_name, data_type, is_nullable, column_default
+from information_schema.columns
+where table_schema = 'public'
+order by table_name, ordinal_position;
+```
+
+And the single highest-value query — this settles the `operators.email`
+assumption that `/api/capture` is built on, in five seconds:
+
+```sql
+select column_name, data_type, is_nullable
+from information_schema.columns
+where table_schema = 'public' and table_name = 'operators';
+```
+
+- [ ] Dump the live schema from Supabase (CLI or SQL editor, above) and
+      commit it as `supabase/migrations/0001_init.sql` — tables,
+      constraints, indexes, and RLS policies as they actually exist.
 - [ ] **Settle the `operators` ↔ auth-user link.** `app/api/capture/route.ts`
       assumes `operators.email === user.email`. Confirm or correct it. If
       the real link is a different column (e.g. `auth_user_id`), fix the
