@@ -46,13 +46,19 @@ Two things to decide while doing this:
 Watch for guide bug #5 (stale PostgREST reads) and #7 (client crash from a
 `!` assertion across an async boundary) as these land.
 
-## 4. Classifier fallback chain (guide Part 4)
+## 4. Classifier fallback chain (guide Part 4) — ✅ done
 
-`classifyCapture` calls Claude (`claude-haiku-4-5`) and throws if anything
-fails. The guide specifies Claude primary → OpenAI fallback → regex last
-resort. We have no fallback at all, so an Anthropic outage or quota
-exhaustion drops captures entirely — the same failure mode that already bit
-us once with Whisper. Worth adding before this system is relied on daily.
+`classifyCapture` now runs Claude (`claude-haiku-4-5`) → OpenAI
+(`OPENAI_CLASSIFIER_MODEL`) → regex, recording which tier produced the
+result on `raw_captures.llm_source`. The regex tier never throws, so an
+Anthropic outage or exhausted quota degrades a capture instead of dropping
+it, and both surfaces tell the operator when that happened. Credential
+reads were also moved off module scope, where a missing key took down the
+entire webhook on import. See [`CAPTURE_PIPELINE.md`](./CAPTURE_PIPELINE.md).
+
+Not yet verified against the live OpenAI API — tier 2's request shape is
+typechecked and exercised, but this environment blocks `api.openai.com`, so
+a real tier-2 success is unproven until it runs in a deployment.
 
 ## 5. Memory / brain layer (guide Part 6)
 

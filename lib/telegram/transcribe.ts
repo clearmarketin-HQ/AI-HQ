@@ -1,15 +1,18 @@
 import "server-only";
 
-const openAiApiKey = process.env.OPENAI_API_KEY;
-
-if (!openAiApiKey) {
-  throw new Error("Missing OPENAI_API_KEY environment variable");
-}
-
+// Read at call time, not module scope. A module-level throw here took the
+// whole Telegram webhook down on import — including text captures, which
+// never reach Whisper.
 export async function transcribeVoice(
   audio: Blob,
   filename: string
 ): Promise<string> {
+  const openAiApiKey = process.env.OPENAI_API_KEY;
+
+  if (!openAiApiKey) {
+    throw new Error("Missing OPENAI_API_KEY environment variable");
+  }
+
   const formData = new FormData();
   formData.append("file", audio, filename);
   formData.append("model", "whisper-1");

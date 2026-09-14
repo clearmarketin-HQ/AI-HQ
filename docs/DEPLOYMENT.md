@@ -25,13 +25,18 @@ ANTHROPIC_API_KEY=
 - `OPENAI_API_KEY` — Whisper transcription (`lib/telegram/transcribe.ts`).
 - `ANTHROPIC_API_KEY` — Claude classification (`lib/telegram/classify.ts`).
 
+Optional:
+
+- `OPENAI_CLASSIFIER_MODEL` — model for the OpenAI fallback tier of
+  `classifyCapture`. Defaults to `gpt-4o-mini` when unset; the fallback
+  works without it, reusing `OPENAI_API_KEY`.
+
 Local dev: copy `.env.local.example` to `.env.local` and fill in real
 values.
 
 These seven are what the code uses *today*. The build guide's full checklist
 (Appendix B) runs to ~19 — the extras cover parts we haven't built yet
-(Google Calendar/Sheets credentials, `CRON_SECRET`, a fallback classifier
-model). See [`BUILD_GUIDE.md`](./BUILD_GUIDE.md) for which of those we'll
+(Google Calendar/Sheets credentials, `CRON_SECRET`). See [`BUILD_GUIDE.md`](./BUILD_GUIDE.md) for which of those we'll
 need and which don't apply to us.
 
 ## Vercel

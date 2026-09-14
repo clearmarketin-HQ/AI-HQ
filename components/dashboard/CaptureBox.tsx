@@ -30,11 +30,13 @@ export function CaptureBox() {
       }
 
       setValue("");
+      const captured = data.org ? `Captured for ${data.org}` : "Captured";
       setToast({
         kind: "success",
-        text: data.org ? `Captured for ${data.org}` : "Captured",
+        text: data.degraded ? `${captured} — filed without AI, check it` : captured,
       });
-    } catch {
+    } catch (error) {
+      console.error("Capture request failed:", error);
       setToast({ kind: "error", text: "Capture failed — check your connection." });
     } finally {
       setSubmitting(false);

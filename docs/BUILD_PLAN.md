@@ -199,21 +199,43 @@ Each follows Phase 2's pattern. Roughly increasing difficulty:
 
 ---
 
-## Phase 4 — Harden the capture path
+## Phase 4 — Harden the capture path · ✅ done
 
 **Goal:** the front door shouldn't have a single point of failure. It
 already failed once — silently — when the OpenAI quota ran out.
 
-- [ ] Add the fallback chain to `classifyCapture`: Claude
+- [x] Add the fallback chain to `classifyCapture`: Claude
       (`claude-haiku-4-5`) → OpenAI (`OPENAI_CLASSIFIER_MODEL`) → regex
-      last resort. Today an Anthropic outage drops captures entirely.
-- [ ] Keep the DB-revalidation of `org_slug` in every path — never trust a
-      model-returned identifier, whichever model returned it.
-- [ ] Audit for swallowed errors (`.catch(() => {})`) across the capture
-      path — guide bug #3.
+      last resort.
+- [x] Keep the DB-revalidation of `org_slug` in every path — never trust a
+      model-returned identifier, whichever model returned it. Both routes
+      still resolve against the DB, and `normalizeClassification` nulls any
+      slug outside the list the tier was handed.
+- [x] Audit for swallowed errors (`.catch(() => {})`) across the capture
+      path — guide bug #3. Both existing `catch` blocks were legitimate;
+      `CaptureBox` now logs the error it reports.
+- [x] **Not on the original list, found during the audit:** three
+      credential reads threw at *module* scope. A missing `OPENAI_API_KEY`
+      took down the entire Telegram webhook on import — including text
+      captures, which never touch Whisper — and a missing
+      `ANTHROPIC_API_KEY` would have crashed `classify.ts` before the
+      fallback chain could run. All three now read per call.
+- [x] Degraded captures are visible to the operator: the Telegram
+      confirmation appends a "filed without AI" line, and `/api/capture`
+      returns `degraded: true` for the web toast.
 
 **Done when:** killing the Anthropic key in a local run still files the
-capture, degraded but not lost.
+capture, degraded but not lost. ✅ Verified — with both keys removed, seven
+sample captures (including empty and degenerate input) all filed with a
+valid org, kind, urgency and title. With bogus keys, both model tiers fail,
+log, and fall through to regex.
+
+⚠️ **Tier 2 is unverified against the live API.** This environment blocks
+`api.openai.com`, so the OpenAI request shape (strict `json_schema`) is
+typechecked and exercised but has never received a real success response.
+Confirm it in the deployment — easiest check is a capture with the
+Anthropic key temporarily unset, which should land `llm_source` as the
+OpenAI model id rather than `regex`.
 
 ---
 
@@ -300,11 +322,31 @@ returns the actual capture.
 - **Per-phase discipline:** `npx tsc --noEmit` + a dummy-env `next build`
   before every push; branch/PR conventions in `HANDOFF.md`.
 
-## Decisions the next session will need from a human
+## Decisions — settled 2026-09-14
 
-1. **Pipeline's data source** — model deals in Supabase now, or wait for
-   GoHighLevel? (Affects Phase 3.)
-2. **MarketingPulse's data source** — manual entry, or a real ads API?
-3. **Selected-org transport** — URL search param vs. client-side fetching.
-   (Recommend the search param; it's server-readable and shareable.)
-4. **Whether the Brain tab ships inert or hidden** until Phase 6.
+1. **Pipeline's data source** → **stub until GoHighLevel.** Phase 3 renders
+   Pipeline as an explicit "not connected" state; the real thing is built in
+   Phase 8 against the actual CRM structure. Do not model a deals table in
+   Supabase — it would be contradicted by the integration.
+2. **MarketingPulse's data source** → **a real ads API** (Meta / Google
+   Ads), not manual entry. ⚠️ **This blocks the MarketingPulse card**: it
+   needs ad account access, an OAuth app, and credentials before any of it
+   can be built. Treat it like Phase 8 — stub the card and schedule the
+   integration once access exists. Do not build manual entry as a stopgap;
+   it was explicitly not chosen.
+3. **Selected-org transport** → **URL search param.** `?org=<id>` read by
+   server components, applied uniformly across all eight cards. Keeps cards
+   server-rendered, survives refresh, and is shareable. `OrgContext` becomes
+   a driver of the param rather than the source of truth.
+4. **Brain tab** → **ships inert.** The tab stays visible and routes to a
+   page that states the feature is coming in Phase 6. It must not render a
+   search box that does nothing.
+
+### Still needed from a human
+
+- **Phase 0** — Vercel env vars and the Telegram webhook URL. Needs
+  dashboard access to the `ai-hq` project under team `cmhq`.
+- **Phase 1** — Supabase access to dump the live schema.
+- **Phase 3 (MarketingPulse)** — ad platform account access and
+  credentials, per decision 2.
+- **Phase 8** — the GoHighLevel account/client/project structure.

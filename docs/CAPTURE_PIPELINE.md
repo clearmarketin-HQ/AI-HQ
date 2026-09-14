@@ -88,14 +88,39 @@ Shared by both entry points, unchanged between them.
 If you add a third capture surface, follow this exact order and reuse
 `classifyCapture` rather than re-implementing classification.
 
-## Two steps from the guide we don't do yet
+## Classification is a three-tier fallback chain
 
-The build guide's pipeline (Part 4) has two stages ours is missing:
+`classifyCapture` tries each tier in order and returns the first that
+succeeds, along with the source that produced it:
+
+| Tier | Model | Recorded as `llm_source` |
+| --- | --- | --- |
+| 1 | Claude `claude-haiku-4-5` (structured output) | `claude-haiku-4-5` |
+| 2 | OpenAI `OPENAI_CLASSIFIER_MODEL` (JSON schema, strict) | the model id |
+| 3 | Regex pattern-match, no network | `regex` |
+
+The regex tier never throws, so a capture is never lost to a provider
+outage or an exhausted quota. It matches the org by longest whole-word hit
+across org names and slugs, infers `kind`/`urgency` from keywords, and
+derives a title from the first sentence. Unparsed captures default to
+`this_week`, not `someday` — burying an un-classified capture in the
+someday tier is the same silent loss the fallback exists to prevent.
+
+When tier 3 files a capture, both surfaces say so: Telegram appends a
+"filed without AI" line to the confirmation, and `/api/capture` returns
+`degraded: true` for the web toast.
+
+`normalizeClassification` is the single trust boundary for all three tiers —
+an `org_slug` outside the list passed in becomes `null`, unrecognised enum
+values fall back, and text fields are bounded. Callers still resolve the
+slug against the database; no tier here is the authority on what orgs exist.
+
+Credentials are read per call, never at module scope. A module-level throw
+in `transcribe.ts` previously took down the whole webhook on import —
+including text captures, which never reach Whisper.
+
+## One step from the guide we don't do yet
 
 - **Embedding.** After writing the capture, the guide embeds the text and
   writes a `memory_chunks` row. We have no memory layer at all — see
   `ROADMAP.md` item 5.
-- **Fallback classification.** The guide specifies Claude primary → OpenAI
-  fallback → regex last resort. `classifyCapture` calls Claude and throws if
-  it fails, so an Anthropic outage drops the capture. See `ROADMAP.md`
-  item 4.
