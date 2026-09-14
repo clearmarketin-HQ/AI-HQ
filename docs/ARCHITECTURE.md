@@ -1,5 +1,11 @@
 # Architecture
 
+This build follows the *Personal OS Build Cheat Sheet* (committed at
+[`source/`](./source/)), with deliberate divergences — most importantly, AI
+HQ is multi-business and multi-operator where the guide is single-user. Read
+[`BUILD_GUIDE.md`](./BUILD_GUIDE.md) before mapping anything here back onto
+the guide's prompts.
+
 ## Stack
 
 - **Next.js 15** (App Router, `next dev --turbopack` / `next build --turbopack`)
@@ -74,11 +80,18 @@ middleware.ts              Refreshes the Supabase session and redirects
 
 ## Database schema (inferred — not formally migrated in this repo)
 
-There are no SQL migration files checked in. Whatever tables exist were
+There are no SQL migration files checked in — the build guide's Part 3 Step 3
+(`supabase/migrations/0001_init.sql`) was skipped. Whatever tables exist were
 created directly in the Supabase dashboard/SQL editor. The shapes below are
 reconstructed from the columns each query in code actually selects/inserts —
 treat this as a best-effort map, not a source of truth, and correct it here
-the moment you touch the real schema.
+the moment you touch the real schema. Checking a real migration in is the
+top item on [`ROADMAP.md`](./ROADMAP.md).
+
+Note the naming difference from the guide: where it has a generic `entities`
+table, AI HQ has `orgs` (+ `org_members`, `operators`) because businesses are
+first-class here. There is no `daily_logs` and no `memory_chunks` — the cards
+that would use them don't exist yet.
 
 - **`orgs`** — `id`, `slug`, `name`. RLS-scoped to the current user via an
   (assumed) `org_members` join table — see the comment in `app/layout.tsx`.
