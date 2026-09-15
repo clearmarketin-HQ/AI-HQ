@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
-import { classifyCapture } from "@/lib/telegram/classify";
+import {
+  classifyCapture,
+  REGEX_CLASSIFIER_SOURCE,
+} from "@/lib/telegram/classify";
 
 interface Operator {
   id: string;
@@ -63,7 +66,7 @@ export async function POST(request: NextRequest) {
   }
 
   const orgs = orgsData as OrgRow[];
-  const classification = await classifyCapture(text, orgs);
+  const { classification, llmSource } = await classifyCapture(text, orgs);
 
   // Never trust the AI-returned slug directly — resolve against the orgs
   // we just fetched from the DB.
@@ -80,7 +83,7 @@ export async function POST(request: NextRequest) {
       source: "web",
       raw_text: text,
       classification,
-      llm_source: "claude-haiku-4-5",
+      llm_source: llmSource,
     })
     .select("id")
     .single();
@@ -136,6 +139,9 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     ok: true,
     org: matchedOrg?.name ?? null,
+    // Both model tiers were unreachable and this was filed by pattern-match.
+    // The capture landed, but the client should say it needs a look.
+    degraded: llmSource === REGEX_CLASSIFIER_SOURCE,
     classification,
   });
 }

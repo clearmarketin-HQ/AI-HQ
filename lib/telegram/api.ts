@@ -1,13 +1,24 @@
 import "server-only";
 
-const botToken = process.env.TELEGRAM_BOT_TOKEN;
+// Resolved per call rather than at module scope, so a missing token fails
+// the request that needs it instead of the route's import.
+function botToken(): string {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
 
-if (!botToken) {
-  throw new Error("Missing TELEGRAM_BOT_TOKEN environment variable");
+  if (!token) {
+    throw new Error("Missing TELEGRAM_BOT_TOKEN environment variable");
+  }
+
+  return token;
 }
 
-const API_BASE = `https://api.telegram.org/bot${botToken}`;
-const FILE_BASE = `https://api.telegram.org/file/bot${botToken}`;
+function apiBase(): string {
+  return `https://api.telegram.org/bot${botToken()}`;
+}
+
+function fileBase(): string {
+  return `https://api.telegram.org/file/bot${botToken()}`;
+}
 
 export interface InlineKeyboardButton {
   text: string;
@@ -19,7 +30,7 @@ export async function sendMessage(
   text: string,
   inlineKeyboard?: InlineKeyboardButton[][]
 ): Promise<void> {
-  const response = await fetch(`${API_BASE}/sendMessage`, {
+  const response = await fetch(`${apiBase()}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -42,7 +53,7 @@ export async function answerCallbackQuery(
   callbackQueryId: string,
   text?: string
 ): Promise<void> {
-  const response = await fetch(`${API_BASE}/answerCallbackQuery`, {
+  const response = await fetch(`${apiBase()}/answerCallbackQuery`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ callback_query_id: callbackQueryId, text }),
@@ -57,7 +68,7 @@ export async function answerCallbackQuery(
 
 export async function downloadVoiceFile(fileId: string): Promise<Blob> {
   const getFileResponse = await fetch(
-    `${API_BASE}/getFile?file_id=${encodeURIComponent(fileId)}`
+    `${apiBase()}/getFile?file_id=${encodeURIComponent(fileId)}`
   );
 
   if (!getFileResponse.ok) {
@@ -76,7 +87,7 @@ export async function downloadVoiceFile(fileId: string): Promise<Blob> {
     throw new Error("Telegram getFile response missing file_path");
   }
 
-  const fileResponse = await fetch(`${FILE_BASE}/${filePath}`);
+  const fileResponse = await fetch(`${fileBase()}/${filePath}`);
   if (!fileResponse.ok) {
     throw new Error(`Telegram file download failed: ${fileResponse.status}`);
   }

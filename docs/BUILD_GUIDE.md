@@ -39,7 +39,7 @@ These are **intentional**. Don't "fix" them back toward the guide.
 | Tabs: Home, CRM, Brain, Finance, **Journal, Health** | Home, CRM, Brain, Finance, **Marketing, Calendar** | Business ops, not personal health. |
 | Cards: Operator, Finance Pulse, Key Blockers, Session, **Habit Tracker**, Priorities, **Nutrition** | Operators, FinancePulse, KeyBlockers, Session, **Pipeline**, Priorities, **Calendar**, **MarketingPulse** (8) | Same shape, business-flavoured. No habits/nutrition; added sales Pipeline + MarketingPulse. |
 | `TELEGRAM_USER_ID` env gate (bot listens only to you) | `operators` table lookup by `telegram_id` | Multiple operators need to use the same bot. |
-| Claude primary → OpenAI fallback → regex last resort | Claude (`claude-haiku-4-5`) only; no fallback chain | Simpler for now. **This is a real gap** — see ROADMAP.md. |
+| Claude primary → OpenAI fallback → regex last resort | Same three tiers, in `lib/telegram/classify.ts` | Matched. The tier that produced a classification is recorded on `raw_captures.llm_source`. |
 | `daily_logs` (habits/nutrition/goals/finance JSON) | Not built | Those cards don't exist here. Finance snapshots will need an equivalent. |
 
 ## Divergences that are just *behind* — not decisions
@@ -94,7 +94,7 @@ status:
 We currently use 7 of the guide's ~19 (see [`DEPLOYMENT.md`](./DEPLOYMENT.md)
 for ours). The ones we'll need as more parts get built:
 
-`ANTHROPIC_MODEL`, `OPENAI_CLASSIFIER_MODEL` (fallback classifier),
+`ANTHROPIC_MODEL`,
 `GOOGLE_CALENDAR_ICAL_URL` (Calendar card), `GOOGLE_SHEETS_FINANCE_ID` +
 `GOOGLE_SERVICE_ACCOUNT_EMAIL` + `GOOGLE_SERVICE_ACCOUNT_KEY` (Finance
 Pulse — use a service account, **never** Google's "publish to web"),

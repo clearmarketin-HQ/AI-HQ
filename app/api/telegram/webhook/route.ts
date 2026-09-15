@@ -6,9 +6,13 @@ import {
   downloadVoiceFile,
   sendMessage,
 } from "@/lib/telegram/api";
-import { transcribeVoice } from "@/lib/telegram/transcribe";
+import {
+  TranscriptionError,
+  transcribeVoice,
+} from "@/lib/telegram/transcribe";
 import {
   classifyCapture,
+  REGEX_CLASSIFIER_SOURCE,
   URGENCY_LABELS,
   URGENCY_VALUES,
   type Classification,
@@ -70,9 +74,17 @@ export async function POST(request: NextRequest) {
       rawText = await transcribeVoice(audioBlob, "voice.ogg");
     } catch (error) {
       console.error("Voice transcription failed:", error);
+
+      // Don't tell someone to retry into a failure that retrying can't
+      // clear — send them to the path that still works instead.
+      const needsAttention =
+        error instanceof TranscriptionError && error.needsAttention;
+
       await sendMessage(
         message.chat.id,
-        "⚠️ Couldn't transcribe that voice note right now — try again shortly, or send it as text."
+        needsAttention
+          ? "⚠️ Voice transcription is unavailable — the transcription account needs attention, so retrying won't help. Send this as text and it'll be captured normally."
+          : "⚠️ Couldn't transcribe that voice note right now — try again shortly, or send it as text."
       );
       return NextResponse.json({ ok: true });
     }
@@ -95,7 +107,7 @@ export async function POST(request: NextRequest) {
   }
 
   const orgs = orgsData as OrgRow[];
-  const classification = await classifyCapture(rawText, orgs);
+  const { classification, llmSource } = await classifyCapture(rawText, orgs);
 
   // Never trust the AI-returned slug directly — resolve against the orgs
   // we just fetched from the DB.
@@ -112,7 +124,7 @@ export async function POST(request: NextRequest) {
       source: "telegram",
       raw_text: rawText,
       classification,
-      llm_source: "claude-haiku-4-5",
+      llm_source: llmSource,
     })
     .select("id")
     .single();
@@ -167,7 +179,7 @@ export async function POST(request: NextRequest) {
 
   await sendMessage(
     message.chat.id,
-    buildConfirmationMessage(classification, matchedOrg),
+    buildConfirmationMessage(classification, matchedOrg, llmSource),
     taskId ? buildUrgencyKeyboard(taskId) : undefined
   );
 
@@ -176,24 +188,32 @@ export async function POST(request: NextRequest) {
 
 function buildConfirmationMessage(
   classification: Classification,
-  org: OrgRow | undefined
+  org: OrgRow | undefined,
+  llmSource: string
 ): string {
+  // Both model tiers were unreachable, so this was filed by pattern-match.
+  // Say so — a silently mis-filed capture is how captures get lost.
+  const degradedSuffix =
+    llmSource === REGEX_CLASSIFIER_SOURCE
+      ? "\n\n⚠️ Filed without AI (classifier unavailable) — worth a check."
+      : "";
+
   if (classification.kind === "task" && !org) {
-    return `⚠️ Task captured, but I couldn't tell which business this is for — saved for review: ${classification.title}`;
+    return `⚠️ Task captured, but I couldn't tell which business this is for — saved for review: ${classification.title}${degradedSuffix}`;
   }
 
   const orgPart = org ? ` for ${org.name}` : "";
 
   if (classification.kind === "task") {
     const urgencyLabel = URGENCY_LABELS[classification.urgency];
-    return `✅ Task${orgPart} (${urgencyLabel}): ${classification.title}`;
+    return `✅ Task${orgPart} (${urgencyLabel}): ${classification.title}${degradedSuffix}`;
   }
 
   if (classification.kind === "decision") {
-    return `📌 Decision${orgPart} logged: ${classification.title}`;
+    return `📌 Decision${orgPart} logged: ${classification.title}${degradedSuffix}`;
   }
 
-  return `📝 Note${orgPart} saved: ${classification.title}`;
+  return `📝 Note${orgPart} saved: ${classification.title}${degradedSuffix}`;
 }
 
 async function handleCallbackQuery(
