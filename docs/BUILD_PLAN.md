@@ -87,9 +87,10 @@ Three things remain, marked below.
 - [ ] **Still open:** confirm the `raw_captures`, `tasks` and `audit_log`
       rows actually land, with the correct `org_id` resolved. The reply
       proves classification, not persistence.
-- [ ] **Blocked:** a real voice note. The OpenAI account is out of credit,
-      so Whisper fails — and a failed transcription is currently dropped
-      with no DB row at all (`ROADMAP.md` 4b). Add credit first.
+- [x] A real voice note — confirmed working 2026-09-15, once credit was
+      added to the OpenAI account (auto-reload is now on, so the quota
+      failure shouldn't recur). Whisper transcription and the full capture
+      path both run end-to-end in production.
 - [ ] Log in to the deployed dashboard, submit via the web capture box,
       confirm the same. **This is the first real test of the
       `operators.email` lookup** — if web capture 500s, that's Phase 1's

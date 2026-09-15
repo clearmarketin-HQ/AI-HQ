@@ -136,9 +136,12 @@ remains:
    can go green. This is also where **tier 2 of the fallback chain gets its
    first real test** — the OpenAI request shape has never received a live
    response, because agent sessions can't reach `api.openai.com` either.
-   ⚠️ Note the OpenAI account was out of credit as of 2026-09-14, which
-   also disables Whisper, so voice notes fail (and are currently dropped —
-   see `ROADMAP.md` 4b).
+   ✅ Voice capture confirmed working 2026-09-15 after credit was added
+   to the OpenAI account, with auto-reload enabled so the quota failure
+   shouldn't recur. That also means **tier 2 of the classifier fallback
+   chain is functional again** — it needs OpenAI credit to run at all, so
+   it was dead on arrival while the balance was empty, and the chain
+   degraded straight from Claude to regex.
 2. **Phase 1 — check the real schema into `supabase/migrations/`**,
    settling the `operators.email` question. Everything after this is built
    on guesses until it exists.
