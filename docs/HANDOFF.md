@@ -54,31 +54,36 @@ Full list with priorities: [`ROADMAP.md`](./ROADMAP.md).
 
 ## Live blockers
 
-### 1. Preview deploys fail; Production deploys succeed
+### 1. ~~Deploys failing~~ — resolved 2026-09-18
 
-**Updated 2026-09-14 — this blocker is half-resolved.** Production is
-green: `main` has deployed successfully for its last three commits
-(`042cf04`, `d731ff7`, `6020a32`), and Telegram text capture has been
-confirmed working end-to-end in the deployed bot. The seven env vars are
-evidently set for Production.
+Both environments now deploy green. Kept here as the record of what it was
+and how it was diagnosed, since it cost two sessions.
 
-**Preview deployments still fail.** PR #11 changed only two markdown files
-— zero code — and its Preview build failed; the same commits went green on
-`main` once merged. PR #12 fails the same way. The pattern is
-environment-scoped, not content-scoped, which points at the seven env vars
-being set for Production but **not Preview**. Several modules
-(`lib/supabase/admin.ts`, `client.ts`, `server.ts`, `middleware.ts`) read
-credentials at module scope and throw when they're absent, failing the
-build rather than starting.
+Production was fixed first (env vars set for Production only), which made
+`main` go green while **every Preview build kept failing** — including
+PR #11, which changed two markdown files and no code. That asymmetry was
+the diagnostic: the failure was environment-scoped, not content-scoped.
 
-Fix: Vercel → Project Settings → Environment Variables → add all seven from
-[`DEPLOYMENT.md`](./DEPLOYMENT.md) with **Preview** ticked → redeploy.
-**This is still a dashboard configuration gap, not a code bug** — `next
-build` passes locally with dummy values. Don't try to fix it with code, an
-empty commit, or a PR close/reopen.
+Cause: of the seven env vars, four (`TELEGRAM_WEBHOOK_SECRET`,
+`TELEGRAM_BOT_TOKEN`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`) were scoped to
+Production **and** Preview, but the three Supabase ones
+(`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY`) were Production-only. `lib/supabase/admin.ts`,
+`client.ts`, `server.ts` and `middleware.ts` read those at module scope and
+throw when absent, so the build died during page-data collection.
 
-Consequence: **no PR can show a green check until Preview is configured**,
-so every PR merges on an unverified preview. Production itself is fine.
+Fix was scoping those three to Preview as well. Preview builds went green
+immediately. **It was never a code bug** — `next build` passed locally with
+dummy values throughout.
+
+If a deploy fails again, check the env var's *environment scoping* before
+suspecting the diff, and compare against a build on the other environment.
+
+Note on security: `SUPABASE_SERVICE_ROLE_KEY` in Preview means preview
+deployments can read and write production data past RLS. That is mitigated
+by **Vercel Authentication being enabled for All Deployments** (Settings →
+Deployment Protection), so preview URLs require a logged-in team member.
+If that protection is ever turned off, this becomes a live exposure.
 
 ### 2. `operators.email` is an unverified assumption
 

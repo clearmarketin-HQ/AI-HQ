@@ -45,14 +45,15 @@ The project deploys via Vercel's GitHub integration (no GitHub Actions
 workflow exists in this repo — deploy status shows up purely as a `Vercel`
 commit status / PR comment from `vercel[bot]`).
 
-### ⚠️ Standing issue: env vars set for Production, not Preview
+### Resolved 2026-09-18: all seven vars are scoped to Production + Preview
 
-**Updated 2026-09-14.** Production now works — `main` deploys green and
-Telegram capture runs in the deployed bot. **Preview deployments still
-fail**, including a PR that changed only markdown, so no PR can show a
-green `Vercel` check until the seven env vars above are also set with
-**Preview** ticked. It remains a **Vercel dashboard configuration gap, not
-a code bug**. If you see a deploy fail:
+Both environments deploy green. This section previously described a
+standing failure; the cause was the three Supabase vars being scoped to
+Production only, which failed every Preview build because
+`lib/supabase/*.ts` read them at module scope.
+
+**When adding a new env var, tick Preview as well as Production** or you
+will reintroduce this. If you see a deploy fail:
 
 1. Check whether the failure reproduces with a clean local build:
    ```
