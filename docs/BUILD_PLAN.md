@@ -66,17 +66,19 @@ All of this is dashboard and phone work by definition — an agent session
 can't do any of it (see the reachability note above). Hand the results back
 to the next session.
 
-**Status as of 2026-09-14: mostly done.** The deploy is green on `main` and
-Telegram text capture is confirmed working end-to-end in the deployed bot,
-so the Production env vars are set and the webhook points at the live URL.
-Three things remain, marked below.
+**Status as of 2026-09-18: nearly done.** Both environments deploy green,
+and Telegram text *and* voice capture are confirmed working end-to-end in
+the deployed bot. Two verification steps remain, marked below — both are
+quick, and the second doubles as a free partial answer to Phase 1.
 
 - [x] Set the 7 env vars in Vercel for **Production**.
-- [ ] **Still open: set the same 7 for Preview.** Preview builds fail
-      without them — a PR changing only markdown failed the same way — so
-      no PR can show a green `Vercel` check until this is done.
+- [x] Set the same 7 for Preview — done 2026-09-18. Only the three
+      Supabase vars were missing; the other four were already scoped to
+      both. Preview builds now go green.
 - [x] Redeploy; confirm the `Vercel` check goes green on `main`.
-- [ ] Confirm the Telegram webhook points at the live URL:
+- [x] Telegram webhook points at the live URL — implicitly confirmed:
+      the deployed bot receives and replies to real messages. (Command kept
+      for reference if it ever needs re-pointing:)
       ```
       curl -F "url=https://<live-domain>/api/telegram/webhook" \
            -F "secret_token=$TELEGRAM_WEBHOOK_SECRET" \
@@ -91,10 +93,20 @@ Three things remain, marked below.
       added to the OpenAI account (auto-reload is now on, so the quota
       failure shouldn't recur). Whisper transcription and the full capture
       path both run end-to-end in production.
-- [ ] Log in to the deployed dashboard, submit via the web capture box,
-      confirm the same. **This is the first real test of the
-      `operators.email` lookup** — if web capture 500s, that's Phase 1's
-      problem and you've just found it early.
+- [ ] **Still open:** log in to the deployed dashboard and submit via the
+      web capture box. **Worth doing before the schema dump** — it is a
+      free partial answer to Phase 1's main question. `/api/capture` looks
+      the operator up by `operators.email === user.email`, so:
+      - a successful capture proves `operators.email` exists, is populated,
+        and matches the Supabase Auth user — the assumption holds, and the
+        route needs no change;
+      - a 403 ("account isn't linked to an operator record") means the
+        column exists but no row matches that email;
+      - a 500 means the column probably isn't there at all, and the real
+        link is something else (e.g. `auth_user_id`).
+
+      Whichever happens, note it — it decides one of Phase 1's tasks before
+      the migration is even written.
 
 **Done when:** a capture sent from a phone shows up in Supabase, from the
 deployed app, with no manual intervention.
